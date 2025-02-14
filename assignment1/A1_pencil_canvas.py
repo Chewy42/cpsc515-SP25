@@ -97,7 +97,7 @@ class Canvas:
         self.data = [(grayscale, grayscale, grayscale, 255) for i in range(self.width * self.height)]
         
         # TODO: Task 2.3: call your function `createHeart()` below
-        self.createHeart()
+        #self.createHeart()
 
 
     # Initialize the canvas data with RGBA color data
@@ -119,16 +119,20 @@ class Canvas:
 
     # Function to draw a flower centered onthe input position
     def draw_flower(self, x, y):
-        x = x - self.width * self.pixel_size * -1
-        y = y - self.height * self.pixel_size * -1
         # TODO: Task 5.1: Write your code below
         data_index = self.posToIndex(x, y)
+        print(f"DATA INDEX: {data_index}")
         data_index = data_index - self.width
-        self.data[data_index] = (245, 0, 145, 255)
-        self.data[data_index + 1] = (236, 255, 0, 255)
-        self.data[data_index - 1] = (236, 255, 0, 255)
-        self.data[data_index + self.width] = (236, 255, 0, 255)
-        self.data[data_index - self.width] = (236, 255, 0, 255)
+        print(f"DATA INDEX MINUS WIDTH{self.width}: {data_index}")
+        pink = (245, 0, 145, 255)
+        yellow = (236, 255, 0, 255)
+        if(data_index-self.width < 0 or data_index+self.width > (self.width * self.height) - 1):
+            return
+        self.data[data_index] = pink
+        self.data[data_index + 1] = yellow
+        self.data[data_index - 1] = yellow
+        self.data[data_index + self.width] = yellow
+        self.data[data_index - self.width] = yellow
 
     # Function to render the image on the canvas using OpenGL
     def render(self):

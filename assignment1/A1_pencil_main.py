@@ -43,24 +43,27 @@ def main():
         # Implement actions you'd like to do when the LEFT-button is held
         if left_mouse_held:
             mouse_x, mouse_y = pygame.mouse.get_pos()                                               # get mouse's pixel coordinates on the display
-            #print(f"mouse clicks on display at pixel ({mouse_x}, {mouse_y})")                        
+            print(f"mouse clicks on display at pixel ({mouse_x}, {mouse_y})")                        
             
             # TODO: Task 3.1: Convert mouse's (x,y) coordinates on display into canvas' (x, y) coordinates
             #   write your code below
 
-            index = canvas.posToIndex(mouse_y, mouse_x)                                # convert canvas' (x, y) coordinates into an index
-            #print("index: ", index)
-            canvas_x = index % width
-            canvas_y = index // width
+            if(mouse_x < 0 or mouse_x > width*pixel_size or mouse_y < 0 or mouse_y > height*pixel_size):
+                continue
+            else:
+                index = canvas.posToIndex(mouse_y, mouse_x)                                # convert canvas' (x, y) coordinates into an index
+                #print("index: ", index)
+                canvas_x = index % width
+                canvas_y = index // width
 
-            # uncomment the code below to verify your code
-            # print(f"mouse clicks on canvas at pixel ({canvas_x}, {canvas_y})")                     
-            
-            # TODO: Task 3.2: Turn on the pixel being clicked - write your code below
-            on = canvas.floatToInt(1.0)
-            canvas.data[index] = (on, on, on, on)
+                # uncomment the code below to verify your code
+                # print(f"mouse clicks on canvas at pixel ({canvas_x}, {canvas_y})")                     
+                
+                # TODO: Task 3.2: Turn on the pixel being clicked - write your code below
+                on = canvas.floatToInt(1.0)
+                canvas.data[index] = (on, on, on, on)
 
-            # TODO: Task 6: Implmement a "leaky" pencil - write your code below
+                # TODO: Task 6: Implmement a "leaky" pencil - write your code below
 
 
         # Implement actions you'd like to do when the RIGHT-button is held
