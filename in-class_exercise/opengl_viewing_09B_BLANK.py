@@ -5,6 +5,7 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
+import numpy as np
 
 width, height = 800, 600                                                    # width and height of the screen created
 
@@ -99,12 +100,13 @@ def main():
     #glViewport(0, 0, width//2, height//2)                                  # use integer division to set viweport size be half of the window 
     glMatrixMode(GL_PROJECTION)                                             # set mode to projection transformation
     glLoadIdentity()                                                        # reset transf matrix to an identity
-    #gluPerspective(45, (width / height), 0.1, 100)                         # specify perspective-projection view volume
-    glOrtho(-40, 40, -30, 30, 40, 60)                                       # specify an orthogonal-projection view volume
+    gluPerspective(45, (width / height), 0.1, 100)                         # specify perspective-projection view volume
+    #glOrtho(-40, 40, -30, 30, 40, 60)                                       # specify an orthogonal-projection view volume
 
     glMatrixMode(GL_MODELVIEW)                                              # set mode to modelview (geometric + view transf)
     initmodelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
-    offset_z = 0
+    offset_z = 0 
+    gluLookAt(0, 0, 50, 0, 0, 0, 0, 1, 0)
     while True:
         bResetModelMatrix = False
 
@@ -137,7 +139,7 @@ def main():
         
         glPushMatrix()
         glLoadMatrixf(initmodelMatrix)
-        gluLookAt(0, 0, 50-offset_z, 0, 0, 0, 0, 1, 0)                      # Dynamic view: change camera's z-coord using keyboard keys
+        
         draw_Scarecrow()                                                    # model creation and geom transforms should be below the camera (to be excuted before it)
         drawAxes()
         glPopMatrix()
