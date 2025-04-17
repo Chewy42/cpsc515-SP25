@@ -7,21 +7,21 @@ import numpy as np
 
 from P2_transformView_model_BLANK import Camera, Scarecrow
 
-width, height = 800, 600                                                    # width and height of the screen created
+width, height = 800, 600  # width and height of the screen created
 
 # drawing x, y, z axis in world space
-def drawAxes():                                                             # draw x-axis and y-axis
-    glLineWidth(3.0)                                                        # specify line size (1.0 default)
-    glBegin(GL_LINES)                                                       # replace GL_LINES with GL_LINE_STRIP or GL_LINE_LOOP
-    glColor3f(1.0, 0.0, 0.0)                                                # x-axis: red
-    glVertex3f(0.0, 0.0, 0.0)                                               # v0
-    glVertex3f(100.0, 0.0, 0.0)                                             # v1
-    glColor3f(0.0, 1.0, 0.0)                                                # y-axis: green
-    glVertex3f(0.0, 0.0, 0.0)                                               # v0
-    glVertex3f(0.0, 100.0, 0.0)                                             # v1
-    glColor3f(0.0, 0.0, 1.0)                                                # z-axis: blue
-    glVertex3f(0.0, 0.0, 0.0)                                               # v0
-    glVertex3f(0.0, 0.0, 100.0)                                             # v1
+def drawAxes():  # draw x-axis and y-axis
+    glLineWidth(3.0)  # specify line size (1.0 default)
+    glBegin(GL_LINES)  # replace GL_LINES with GL_LINE_STRIP or GL_LINE_LOOP
+    glColor3f(1.0, 0.0, 0.0)  # x-axis: red
+    glVertex3f(0.0, 0.0, 0.0)  # v0
+    glVertex3f(100.0, 0.0, 0.0)  # v1
+    glColor3f(0.0, 1.0, 0.0)  # y-axis: green
+    glVertex3f(0.0, 0.0, 0.0)  # v0
+    glVertex3f(0.0, 100.0, 0.0)  # v1
+    glColor3f(0.0, 0.0, 1.0)  # z-axis: blue
+    glVertex3f(0.0, 0.0, 0.0)  # v0
+    glVertex3f(0.0, 0.0, 100.0)  # v1
     glEnd()
 
 # drawing the ground
@@ -35,23 +35,23 @@ def drawGround():
     glBegin(GL_QUADS)
     for vertex in ground_vertices:
         glVertex3fv(vertex)
+        
     glEnd()
 
-
 def main():
-    pygame.init()                                                           # initialize a pygame program
-    glutInit()                                                              # initialize glut library 
+    pygame.init()  # initialize a pygame program
+    glutInit()  # initialize glut library
 
-    screen = (width, height)                                                # specify the screen size of the new program window
-    display_surface = pygame.display.set_mode(screen, DOUBLEBUF | OPENGL)   # create a display of size 'screen', use double-buffers and OpenGL
-    pygame.display.set_caption('CPSC515: Transform & View - Matt Favela')     # set title of the program window
+    screen = (width, height)  # specify the screen size of the new program window
+    display_surface = pygame.display.set_mode(screen, DOUBLEBUF | OPENGL)  # create a display of size 'screen', use double-buffers and OpenGL
+    pygame.display.set_caption('CPSC515: Transform & View - Matt Favela')  # set title of the program window
 
     glEnable(GL_DEPTH_TEST)
-    glMatrixMode(GL_PROJECTION)                                             # set mode to projection transformation
-    glLoadIdentity()                                                        # reset transf matrix to an identity
-    gluPerspective(45, (width / height), 0.1, 1000.0)                       # specify perspective projection view volume
+    glMatrixMode(GL_PROJECTION)  # set mode to projection transformation
+    glLoadIdentity()  # reset transf matrix to an identity
+    gluPerspective(45, (width / height), 0.1, 1000.0)  # specify perspective projection view volume
 
-    glMatrixMode(GL_MODELVIEW)                                              # set mode to modelview (geometric + view transf)
+    glMatrixMode(GL_MODELVIEW)  # set mode to modelview (geometric + view transf)
     initmodelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
     modelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
 
@@ -102,8 +102,11 @@ def main():
                         key_r_on = False
                 elif event.key == pygame.K_r:
                     key_r_on = not key_r_on
+                    scarecrow = upgraded_scarecrow
                     if key_r_on:
                         key_l_on = True
+                    else:
+                        key_l_on = False
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_i:
                     key_i_on = False
@@ -149,7 +152,7 @@ def main():
         modelMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
         glLoadIdentity()
-        glClearColor(0.4, 0.4, 0.4, 1)
+        glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         new_eye_pos, new_lookat = camera.update_view()
