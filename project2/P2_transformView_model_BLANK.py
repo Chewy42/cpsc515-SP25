@@ -61,18 +61,31 @@ class Camera:
             self.eye_pos = np.array([0.0, 10.0, 50.0])
             self.look_at = np.array([0.0, 0.0, -1.0])
             self.view_up = np.array([0.0, 1.0, 0.0])
+            self.view_mode = "first_person"
+        elif self.view_mode == "first_person":
+            self.eye_pos = np.array([0.0, 10.0, 50.0])
+            self.look_at = np.array([0.0, 0.0, -1.0])
+            self.view_up = np.array([0.0, 1.0, 0.0])
             self.view_mode = "front"
 
-    def update_view(self):
-        base_look_at = np.array([0.0, 0.0, 0.0])
-        if self.view_mode == "front":
-            base_look_at = self.eye_pos + np.array([0.0, -10.0, -50.0])
-        elif self.view_mode == "side":
-            base_look_at = self.eye_pos + np.array([-50.0, -10.0, 0.0])
-        elif self.view_mode == "back":
-            base_look_at = self.eye_pos + np.array([0.0, -10.0, 50.0])
+    def update_view(self, scarecrow=None):
+        if self.view_mode == "first_person" and scarecrow is not None:
+            base = scarecrow.walk_vector
+            head_offset = np.array(scarecrow.head_offset)
+            head_pos = base + head_offset
+            facing = np.array([0.0, 0.0, 1.0])
+            facing = rotate_vector(facing, scarecrow.walk_angle, "Y")
+            facing = rotate_vector(facing, scarecrow.head_rotation[0], "X")
+            nose_offset = np.array([0.0, 0.5, scarecrow.nose_cylinder[2]])
+            eye_pos = head_pos + rotate_vector(nose_offset, scarecrow.head_rotation[0], "X")
+            eye_pos = base + rotate_vector(eye_pos - base, scarecrow.walk_angle, "Y")
+            new_eye_pos = eye_pos
+            new_lookat = new_eye_pos + 2 * facing
+            return new_eye_pos, new_lookat
+        base_look_at = self.eye_pos + self.look_at
         gaze_vector = base_look_at - self.eye_pos
-        unit_gaze = gaze_vector / np.linalg.norm(gaze_vector) if np.linalg.norm(gaze_vector) != 0 else np.array([0,0,-1])
+        norm = np.linalg.norm(gaze_vector)
+        unit_gaze = gaze_vector / norm if norm != 0 else np.array([0,0,-1])
         gaze_h = rotate_vector(unit_gaze, self.tilt_angle_horizontal, "Y")
         gaze_hv = rotate_vector(gaze_h, self.tilt_angle_vertical, "X")
         new_eye_pos = self.eye_pos + (gaze_hv * self.zoom_distance)
@@ -131,99 +144,131 @@ class Scarecrow:
             self.walk_direction = self.walk_direction / norm
         self.walk_vector += self.walk_speed * self.walk_direction
 
-    def draw_Scarecrow(self):
+    def draw_Scarecrow(self, camera=None):
         quadratic = gluNewQuadric()
         gluQuadricDrawStyle(quadratic, GLU_FILL)
         glPushMatrix()
+        
+        # Head
         glPushMatrix()
         glTranslatef(self.head_offset[0], self.head_offset[1], self.head_offset[2])
         glRotatef(self.head_rotation[0], 0, 1, 0)
         glColor3f(0.0, 1.0, 0.0)
         gluSphere(quadratic, self.head_sphere, 32, 32)
+        
+        # Nose
         glPushMatrix()
         glTranslatef(0.0, 0.0, self.head_sphere)
         glColor3f(1.0, 0.5, 0.0)
         gluCylinder(quadratic, self.nose_cylinder[0], self.nose_cylinder[1], self.nose_cylinder[2], 32, 32)
         glPopMatrix()
         glPopMatrix()
+        
+        # Torso
         glPushMatrix()
         glTranslatef(self.torso_offset[0], self.torso_offset[1], self.torso_offset[2])
         glRotatef(self.torso_rotation[0], 1, 0, 0)
         glColor3f(1.0, 1.0, 0.0)
         gluCylinder(quadratic, self.torso_cylinder[0], self.torso_cylinder[1], self.torso_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Right Leg
         glPushMatrix()
         glTranslatef(self.leg_offset[0], self.leg_offset[1], self.leg_offset[2])
         glRotatef(self.leg_rotation[0], 1, 0, 0)
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.leg_cylinder[0], self.leg_cylinder[1], self.leg_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Left Leg
         glPushMatrix()
         glTranslatef(-self.leg_offset[0], self.leg_offset[1], self.leg_offset[2])
         glRotatef(self.leg_rotation[0], 1, 0, 0)
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.leg_cylinder[0], self.leg_cylinder[1], self.leg_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Right Arm
         glPushMatrix()
         glTranslatef(self.arm_offset[0], self.arm_offset[1], self.arm_offset[2])
         glRotatef(self.arm_rotation[0], 0, 1, 0)
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.arm_cylinder[0], self.arm_cylinder[1], self.arm_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Left Arm
         glPushMatrix()
         glTranslatef(-self.arm_offset[0], self.arm_offset[1], self.arm_offset[2])
         glRotatef(-self.arm_rotation[0], 0, 1, 0)
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.arm_cylinder[0], self.arm_cylinder[1], self.arm_cylinder[2], 32, 32)
         glPopMatrix()
+        
         glPopMatrix()
 
-    def draw_Scarecrow_Upgrade(self):
-        glClearColor(0, 0, 0, 1)                                                # set background RGBA color 
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)                        # clear the buffers initialized in the display mode
+    def draw_Scarecrow_Upgrade(self, camera=None): 
+        glClearColor(0, 0, 0, 1)
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         quadratic = gluNewQuadric()
         gluQuadricDrawStyle(quadratic, GLU_FILL)  
         glPushMatrix() # DO NOT DELETE THIS
         glTranslatef(self.walk_vector[0], self.walk_vector[1], self.walk_vector[2])
         glRotatef(self.walk_angle, 0, 1, 0)
         #--------------Write your code below -------------------
-        glPushMatrix()
-        glTranslatef(*self.head_offset)
-        glRotatef(self.head_rotation[0], 0, 1, 0)
-        glColor3f(0.0, 1.0, 0.0)
-        gluSphere(quadratic, self.head_sphere, 32, 32)
-        glPushMatrix()
-        glTranslatef(0.0, 0.0, self.head_sphere)
-        glColor3f(1.0, 0.5, 0.0)
-        gluCylinder(quadratic, self.nose_cylinder[0], self.nose_cylinder[1], self.nose_cylinder[2], 32, 32)
-        glPopMatrix()
-        glPopMatrix()
+        
+        # Head and Nose
+        if camera is None or camera.view_mode != "first_person":
+            glPushMatrix()
+            glTranslatef(*self.head_offset)
+            glRotatef(self.head_rotation[0], 0, 1, 0)
+            glColor3f(0.0, 1.0, 0.0)
+            gluSphere(quadratic, self.head_sphere, 32, 32)
+            
+            # Nose
+            glPushMatrix()
+            glTranslatef(0.0, 0.0, self.head_sphere)
+            glColor3f(1.0, 0.5, 0.0)
+            gluCylinder(quadratic, self.nose_cylinder[0], self.nose_cylinder[1], self.nose_cylinder[2], 32, 32)
+            glPopMatrix()
+            glPopMatrix()
+
+        # Torso
         glPushMatrix()
         glTranslatef(*self.torso_offset)
         glRotatef(self.torso_rotation[0], 1, 0, 0)
         glColor3f(1.0, 1.0, 0.0)
         gluCylinder(quadratic, self.torso_cylinder[0], self.torso_cylinder[1], self.torso_cylinder[2], 32, 32)
         glPopMatrix()
+
+        # Right Arm
         glPushMatrix()
         glTranslatef(self.arm_offset[0], self.arm_offset[1], self.arm_offset[2])
         glRotatef(self.arm_angle, 1, 0, 0)
         glRotatef(15, 0, 0, 1)
         glRotatef(90, 1, 0, 0)
+        
+        # Upper Arm
         glPushMatrix()
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.upper_lower_arm_cylinder[0], self.upper_lower_arm_cylinder[1], self.upper_lower_arm_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Elbow Joint
         glTranslatef(0.0, 0.0, self.upper_lower_arm_cylinder[2])
         glPushMatrix()
         glColor3f(0.5, 0.5, 0.5)
         gluSphere(quadratic, self.joint_arm_sphere, 32, 32)
         glPopMatrix()
+        
+        # Lower Arm and Hand
         glPushMatrix()
         if self.arm_angle < 0:
             bend_angle = -60 * (abs(self.arm_angle) / 30)
             glRotatef(bend_angle, 1, 0, 0)
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.upper_lower_arm_cylinder[0], self.upper_lower_arm_cylinder[1], self.upper_lower_arm_cylinder[2], 32, 32)
+        
+        # Hand
         glTranslatef(0.0, 0.0, self.upper_lower_arm_cylinder[2])
         glPushMatrix()
         glColor3f(0.0, 1.0, 0.0)
@@ -231,26 +276,36 @@ class Scarecrow:
         glPopMatrix()
         glPopMatrix()
         glPopMatrix()
+
+        # Left Arm
         glPushMatrix()
         glTranslatef(-self.arm_offset[0], self.arm_offset[1], self.arm_offset[2])
         glRotatef(-self.arm_angle, 1, 0, 0)
         glRotatef(-15, 0, 0, 1)
         glRotatef(90, 1, 0, 0)
+        
+        # Upper Arm
         glPushMatrix()
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.upper_lower_arm_cylinder[0], self.upper_lower_arm_cylinder[1], self.upper_lower_arm_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Elbow Joint
         glTranslatef(0.0, 0.0, self.upper_lower_arm_cylinder[2])
         glPushMatrix()
         glColor3f(0.5, 0.5, 0.5)
         gluSphere(quadratic, self.joint_arm_sphere, 32, 32)
         glPopMatrix()
+        
+        # Lower Arm and Hand
         glPushMatrix()
         if self.arm_angle > 0:
             bend_angle = -60 * (abs(self.arm_angle) / 30)
             glRotatef(bend_angle, 1, 0, 0)
         glColor3f(0.0, 0.0, 1.0)
         gluCylinder(quadratic, self.upper_lower_arm_cylinder[0], self.upper_lower_arm_cylinder[1], self.upper_lower_arm_cylinder[2], 32, 32)
+        
+        # Hand
         glTranslatef(0.0, 0.0, self.upper_lower_arm_cylinder[2])
         glPushMatrix()
         glColor3f(0.0, 1.0, 0.0)
@@ -258,25 +313,35 @@ class Scarecrow:
         glPopMatrix()
         glPopMatrix()
         glPopMatrix()
+
+        # Right Leg
         glPushMatrix()
         glTranslatef(self.leg_offset[0], self.leg_offset[1], self.leg_offset[2])
         glRotatef(self.leg_angle, 1, 0, 0)
         glRotatef(90, 1, 0, 0)
+        
+        # Upper Leg
         glPushMatrix()
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.upper_lower_leg_cylinder[0], self.upper_lower_leg_cylinder[1], self.upper_lower_leg_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Knee Joint
         glTranslatef(0.0, 0.0, self.upper_lower_leg_cylinder[2])
         glPushMatrix()
         glColor3f(0.5, 0.5, 0.5)
         gluSphere(quadratic, self.joint_leg_sphere, 32, 32)
         glPopMatrix()
+        
+        # Lower Leg and Foot
         glPushMatrix()
         if self.leg_angle > 0:
             bend_angle = -30 * (abs(self.leg_angle) / 30)
             glRotatef(bend_angle, 1, 0, 0)
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.upper_lower_leg_cylinder[0], self.upper_lower_leg_cylinder[1], self.upper_lower_leg_cylinder[2], 32, 32)
+        
+        # Foot
         glTranslatef(0.0, 0.0, self.upper_lower_leg_cylinder[2])
         glPushMatrix()
         glScalef(0.8 * self.foot_cube, 1.8 * self.foot_cube, 1.0 * self.foot_cube)
@@ -288,25 +353,35 @@ class Scarecrow:
         glPopMatrix()
         glPopMatrix()
         glPopMatrix()
+
+        # Left Leg
         glPushMatrix()
         glTranslatef(-self.leg_offset[0], self.leg_offset[1], self.leg_offset[2])
         glRotatef(-self.leg_angle, 1, 0, 0)
         glRotatef(90, 1, 0, 0)
+        
+        # Upper Leg
         glPushMatrix()
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.upper_lower_leg_cylinder[0], self.upper_lower_leg_cylinder[1], self.upper_lower_leg_cylinder[2], 32, 32)
         glPopMatrix()
+        
+        # Knee Joint
         glTranslatef(0.0, 0.0, self.upper_lower_leg_cylinder[2])
         glPushMatrix()
         glColor3f(0.5, 0.5, 0.5)
         gluSphere(quadratic, self.joint_leg_sphere, 32, 32)
         glPopMatrix()
+        
+        # Lower Leg and Foot
         glPushMatrix()
         if self.leg_angle < 0:
             bend_angle = -30 * (abs(self.leg_angle) / 30)
             glRotatef(bend_angle, 1, 0, 0)
         glColor3f(1.0, 0.0, 0.0)
         gluCylinder(quadratic, self.upper_lower_leg_cylinder[0], self.upper_lower_leg_cylinder[1], self.upper_lower_leg_cylinder[2], 32, 32)
+        
+        # Foot
         glTranslatef(0.0, 0.0, self.upper_lower_leg_cylinder[2])
         glPushMatrix()
         glScalef(1.0 * self.foot_cube, 1.8 * self.foot_cube, 0.8)
@@ -319,4 +394,4 @@ class Scarecrow:
         glPopMatrix()
         glPopMatrix()
         #--------------Write your code above -------------------
-        glPopMatrix() # DO NOT DELETE THIS
+        glPopMatrix() # DO NOT DELETE THIS)

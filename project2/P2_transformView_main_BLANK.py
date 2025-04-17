@@ -49,7 +49,7 @@ def main():
     glEnable(GL_DEPTH_TEST)
     glMatrixMode(GL_PROJECTION)  # set mode to projection transformation
     glLoadIdentity()  # reset transf matrix to an identity
-    gluPerspective(45, (width / height), 0.1, 1000.0)  # specify perspective projection view volume
+    gluPerspective(45, (width / height), 1.0, 1000.0)  # specify perspective projection view volume
 
     glMatrixMode(GL_MODELVIEW)  # set mode to modelview (geometric + view transf)
     initmodelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
@@ -85,14 +85,26 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
             if event.type == pygame.MOUSEMOTION:
-                if pygame.mouse.get_pressed()[0]:
+                if camera.view_mode == "first_person":
+                    dx, dy = event.rel
+                    scarecrow.walk_angle -= dx * 0.2
+                    scarecrow.head_rotation[0] += dy * 0.2
+                    scarecrow.head_rotation[0] = max(-85.0, min(85.0, scarecrow.head_rotation[0]))
+                elif pygame.mouse.get_pressed()[0]:
                     glRotatef(event.rel[1], 1, 0, 0)
                     glRotatef(event.rel[0], 0, 1, 0)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_0:
                     bResetModelMatrix = True
                 elif event.key == pygame.K_SPACE:
+                    prev_mode = camera.view_mode
                     camera.switch_view()
+                    if camera.view_mode == "first_person" and prev_mode != "first_person":
+                        pygame.event.set_grab(True)
+                        pygame.mouse.set_visible(False)
+                    elif prev_mode == "first_person" and camera.view_mode != "first_person":
+                        pygame.event.set_grab(False)
+                        pygame.mouse.set_visible(True)
                 elif event.key == pygame.K_u:
                     if scarecrow == basic_scarecrow:
                         scarecrow = upgraded_scarecrow
@@ -171,18 +183,19 @@ def main():
             scarecrow.walk_speed = scarecrow.swing_speed * 0.5
             scarecrow.walk_vector += scarecrow.walk_speed * scarecrow.walk_direction
 
-        if key_w_on:
-            scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, 1.0])
-        if key_s_on:
-            scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, -1.0])
-        if key_a_on:
-            scarecrow.walk_vector += scarecrow.walk_speed * np.array([1.0, 0.0, 0.0])
-        if key_d_on:
-            scarecrow.walk_vector += scarecrow.walk_speed * np.array([-1.0, 0.0, 0.0])
-        if key_q_on:
-            camera.roll_angle -= 1.0
-        if key_e_on:
-            camera.roll_angle += 1.0
+        if camera.view_mode != "first_person":
+            if key_w_on:
+                scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, 1.0])
+            if key_s_on:
+                scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, -1.0])
+            if key_a_on:
+                scarecrow.walk_vector += scarecrow.walk_speed * np.array([1.0, 0.0, 0.0])
+            if key_d_on:
+                scarecrow.walk_vector += scarecrow.walk_speed * np.array([-1.0, 0.0, 0.0])
+            if key_q_on:
+                camera.roll_angle -= 1.0
+            if key_e_on:
+                camera.roll_angle += 1.0
 
         if bResetModelMatrix:
             glLoadIdentity()
@@ -199,7 +212,10 @@ def main():
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        new_eye_pos, new_lookat = camera.update_view()
+        if camera.view_mode == "first_person":
+            new_eye_pos, new_lookat = camera.update_view(scarecrow)
+        else:
+            new_eye_pos, new_lookat = camera.update_view()
         gluLookAt(new_eye_pos[0], new_eye_pos[1], new_eye_pos[2],
                   new_lookat[0], new_lookat[1], new_lookat[2],
                   camera.view_up[0], camera.view_up[1], camera.view_up[2])
@@ -207,12 +223,27 @@ def main():
         glMultMatrixf(modelMatrix)
 
         if scarecrow.version == "basic":
-            scarecrow.draw_Scarecrow()
+            scarecrow.draw_Scarecrow(camera)
         elif scarecrow.version == "upgraded":
-            scarecrow.draw_Scarecrow_Upgrade()
+            scarecrow.draw_Scarecrow_Upgrade(camera)
 
         drawAxes()
         drawGround()
+        glPushMatrix()
+        glColor3f(1,0,0)
+        glTranslatef(10,0,10)
+        glutSolidCube(5)
+        glPopMatrix()
+        glPushMatrix()
+        glColor3f(0,1,0)
+        glTranslatef(-10,0,10)
+        glutSolidCube(5)
+        glPopMatrix()
+        glPushMatrix()
+        glColor3f(0,0,1)
+        glTranslatef(0,0,-15)
+        glutSolidCube(5)
+        glPopMatrix()
 
         glPopMatrix()
         pygame.display.flip()
