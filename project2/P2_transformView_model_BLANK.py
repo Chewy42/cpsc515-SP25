@@ -21,7 +21,7 @@ def rotate_vector(vector, angle_degrees, rot_axis = "Y"):
             [-np.sin(angle_radians), 0, np.cos(angle_radians)]
         ])
     elif rot_axis == "Z":
-        rot_matrix = np.arrway([
+        rot_matrix = np.array([
             [np.cos(angle_radians), -np.sin(angle_radians), 0],
             [np.sin(angle_radians), np.cos(angle_radians), 0],
             [0, 0, 1]
@@ -40,11 +40,13 @@ class Camera:
         self.tilt_angle_horizontal = 0.0
         self.tilt_angle_vertical = 0.0
         self.zoom_distance = 0.0
+        self.roll_angle = 0.0
 
     def switch_view(self):
         self.tilt_angle_horizontal = 0.0
         self.tilt_angle_vertical = 0.0
         self.zoom_distance = 0.0
+        self.roll_angle = 0.0
         if self.view_mode == "front":
             self.eye_pos = np.array([50.0, 10.0, 0.0])
             self.look_at = np.array([-1.0, 0.0, 0.0])
@@ -75,7 +77,17 @@ class Camera:
         gaze_hv = rotate_vector(gaze_h, self.tilt_angle_vertical, "X")
         new_eye_pos = self.eye_pos + (gaze_hv * self.zoom_distance)
         new_lookat = new_eye_pos + gaze_hv
-        self.view_up = np.array([0.0, 1.0, 0.0])
+        # apply roll angle around the gaze axis to tilt camera
+        axis = gaze_hv / np.linalg.norm(gaze_hv)
+        theta = np.deg2rad(self.roll_angle)
+        ux, uy, uz = axis
+        cos_t, sin_t = np.cos(theta), np.sin(theta)
+        R = np.array([
+            [cos_t + ux*ux*(1-cos_t), ux*uy*(1-cos_t)-uz*sin_t, ux*uz*(1-cos_t)+uy*sin_t],
+            [uy*ux*(1-cos_t)+uz*sin_t, cos_t + uy*uy*(1-cos_t), uy*uz*(1-cos_t)-ux*sin_t],
+            [uz*ux*(1-cos_t)-uy*sin_t, uz*uy*(1-cos_t)+ux*sin_t, cos_t + uz*uz*(1-cos_t)]
+        ])
+        self.view_up = R.dot(np.array([0.0, 1.0, 0.0]))
         return new_eye_pos, new_lookat
 
 class Scarecrow:

@@ -69,6 +69,12 @@ def main():
     key_o_on = False        # if key 'O' is HELD on now
     key_l_on = False        # if key 'L' is PRESSED - Switch to turn on/off arm/leg swinging animation for walk-in-place 
     key_r_on = False        # if key 'R' is PRESSED - Switch to turn on/off freeform walking
+    key_a_on = False
+    key_d_on = False
+    key_w_on = False
+    key_s_on = False
+    key_q_on = False
+    key_e_on = False
 
     while True:
         bResetModelMatrix = False
@@ -107,11 +113,36 @@ def main():
                         key_l_on = True
                     else:
                         key_l_on = False
+                elif event.key == pygame.K_a:
+                    key_a_on = True
+                elif event.key == pygame.K_d:
+                    key_d_on = True
+                elif event.key == pygame.K_w:
+                    key_w_on = True
+                elif event.key == pygame.K_s:
+                    key_s_on = True
+                elif event.key == pygame.K_q:
+                    key_q_on = True
+                elif event.key == pygame.K_e:
+                    key_e_on = True
+
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_i:
                     key_i_on = False
                 elif event.key == pygame.K_o:
                     key_o_on = False
+                elif event.key == pygame.K_a:
+                    key_a_on = False
+                elif event.key == pygame.K_d:
+                    key_d_on = False
+                elif event.key == pygame.K_w:
+                    key_w_on = False
+                elif event.key == pygame.K_s:
+                    key_s_on = False
+                elif event.key == pygame.K_q:
+                    key_q_on = False
+                elif event.key == pygame.K_e:
+                    key_e_on = False
 
         if key_i_on:
             scarecrow.head_rotation[0] += 1.0
@@ -119,7 +150,7 @@ def main():
             scarecrow.head_rotation[0] -= 1.0
         scarecrow.head_rotation[0] = max(-85.0, min(85.0, scarecrow.head_rotation[0]))
 
-        if key_l_on:
+        if key_l_on or key_w_on or key_s_on or key_a_on or key_d_on:
             new_arm_angle = scarecrow.arm_angle + scarecrow.arm_direction * scarecrow.swing_speed
             if abs(new_arm_angle) > 30:
                 overshoot = abs(new_arm_angle) - 30
@@ -139,6 +170,19 @@ def main():
         if key_r_on:
             scarecrow.walk_speed = scarecrow.swing_speed * 0.5
             scarecrow.walk_vector += scarecrow.walk_speed * scarecrow.walk_direction
+
+        if key_w_on:
+            scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, 1.0])
+        if key_s_on:
+            scarecrow.walk_vector += scarecrow.walk_speed * np.array([0.0, 0.0, -1.0])
+        if key_a_on:
+            scarecrow.walk_vector += scarecrow.walk_speed * np.array([1.0, 0.0, 0.0])
+        if key_d_on:
+            scarecrow.walk_vector += scarecrow.walk_speed * np.array([-1.0, 0.0, 0.0])
+        if key_q_on:
+            camera.roll_angle -= 1.0
+        if key_e_on:
+            camera.roll_angle += 1.0
 
         if bResetModelMatrix:
             glLoadIdentity()

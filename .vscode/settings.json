@@ -1,0 +1,14 @@
+{
+    "python.pythonPath": "${env:USERPROFILE}\\Anaconda3\\envs\\cpsc515\\python.exe",
+    "terminal.integrated.profiles.windows": {
+        "Anaconda Prompt": {
+            "path": "C:\\Windows\\System32\\cmd.exe",
+            "args": [
+                "/K",
+                "${env:USERPROFILE}\\Anaconda3\\Scripts\\activate.bat",
+                "cpsc515"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "Anaconda Prompt"
+}
