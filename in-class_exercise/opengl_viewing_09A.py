@@ -6,6 +6,8 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 
+import numpy as np
+
 width, height = 800, 600                                                    # width and height of the screen created
 
 def drawAxes():                                                             # draw x-axis and y-axis
@@ -85,26 +87,30 @@ def draw_Scarecrow():                                                  # This is
 
 def main():
     pygame.init()                                                           # initialize a pygame program
-    
+
     #os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100, 50)               # specify the position of the display window (default: screen center)
 
     glutInit()                                                              # initialize glut library 
 
-    screen = (width, height)                                                # specify displaly window's size
+    screen = (width, height)                                                # specify the screen size of the new program window
     display_window = pygame.display.set_mode(screen, DOUBLEBUF | OPENGL)    # create a display of size 'screen', use double-buffers and OpenGL
-    pygame.display.set_caption('CPSC 515 - Projection Transform')           # set title of the program window
+    pygame.display.set_caption('CPSC 515 - Camera Transform')               # set title of the program window
 
     glEnable(GL_DEPTH_TEST)
     glViewport(0, 0, width, height)                                         # the viewport can be identical or smaller than the display window
     #glViewport(0, 0, width//2, height//2)                                  # use integer division to set viweport size be half of the window 
     glMatrixMode(GL_PROJECTION)                                             # set mode to projection transformation
     glLoadIdentity()                                                        # reset transf matrix to an identity
-    gluPerspective(45, (width / height), 0.1, 100)                         # specify perspective-projection view volume
-    #glOrtho(-40, 40, -30, 30, 50, 70)                                       # specify an orthogonal-projection view volume
+    gluPerspective(45, (width / height), 0.1, 100.0)                        # specify perspective-projection view volume
+    #glOrtho(-40, 40, -30, 30, 40, 60)                                      # specify an orthogonal-projection view volume
 
     glMatrixMode(GL_MODELVIEW)                                              # set mode to modelview (geometric + view transf)
+    #gluLookAt(0, 0, 50, 0, 0, 0, 0, 1, 0)                                   # Static view: set camera's eye, look-at, and view-up in the world
     initmodelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
-    offset_z = 0
+    offset_z = 0 # used for Exercise 1
+    zoom_dist = 0 # used for Exercises 2 & 3
+    eye_pos = np.array([50, 0, 50]) # Exercise 3
+    look_at = np.array([-10, 10, -10]) 
     while True:
         bResetModelMatrix = False
 
@@ -127,8 +133,12 @@ def main():
                     bResetModelMatrix = True
                 elif event.key == pygame.K_UP:
                     offset_z += 1
+                    zoom_dist -= 1
                 elif event.key == pygame.K_DOWN:
                     offset_z -= 1
+                    zoom_dist += 1
+
+        #draw_Scarecrow()                                                    # model creation and geom transforms
 
         # reset the current model-view back to the initial matrix
         if (bResetModelMatrix):
@@ -137,8 +147,16 @@ def main():
         
         glPushMatrix()
         glLoadMatrixf(initmodelMatrix)
-        gluLookAt(0, 0, 50-offset_z, 0, 0, 0, 0, 1, 0)                      # Dynamic view: change camera's z-coord using keyboard keys
-        draw_Scarecrow()                                                    # model creation and geom transforms should be below the camera (to be excuted before it)
+        #gluLookAt(0, 0, 50 - offset_z, 0, 0, 0, 0, 1, 0) # Exercise 1
+        #gluLookAt(50 + zoom_dist, 0, 0, 0, 0, 0, 0, 1, 0) # Exercise 2
+        # Exercise 3 - START
+        gaze_vec = look_at - eye_pos
+        gaze_vec_normalize = gaze_vec / np.linalg.norm(gaze_vec)
+        eye_pos_new = eye_pos - zoom_dist * gaze_vec_normalize
+        look_at_new = look_at - zoom_dist * gaze_vec_normalize
+        gluLookAt(eye_pos_new[0], eye_pos_new[1], eye_pos_new[2], look_at_new[0], look_at_new[1], look_at_new[2], 0, 1, 0)
+        # Exercise 3 - END
+        draw_Scarecrow()
         drawAxes()
         glPopMatrix()
 

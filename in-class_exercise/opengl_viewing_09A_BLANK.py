@@ -5,7 +5,6 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import numpy as np
 
 width, height = 800, 600                                                    # width and height of the screen created
 
@@ -104,16 +103,10 @@ def main():
     #glOrtho(-40, 40, -30, 30, 40, 60)                                      # specify an orthogonal-projection view volume
 
     glMatrixMode(GL_MODELVIEW)                                              # set mode to modelview (geometric + view transf)
-    # went 50 on the z axis and is looking at 0,0,0, camera's view is upward since the view-up vector is 0,1,0
+    gluLookAt(0, 0, 50, 0, 0, 0, 0, 1, 0)                                   # Static view: set camera's eye, look-at, and view-up in the world
     initmodelMatrix = glGetFloat(GL_MODELVIEW_MATRIX)
     offset_z = 0
-    gluLookAt(50, 0, 0, 0, 0, 0, 0, 1, 0)                                 # Static view: set camera's eye, look-at, and view-up in the world
-    zoom_dist = 0
-    eye = np.array([50, 0, 0])
-    lookat = np.array([-10, 0, -10])
-    #gluLookAt(50,0,0,0,0,0,0,1,0) # Static view: set camera's eye, look-at, and view-up in the world
     while True:
-        
         bResetModelMatrix = False
 
         # user interface event handling
@@ -129,25 +122,16 @@ def main():
                     glRotatef(event.rel[1], 1, 0, 0)
                     glRotatef(event.rel[0], 0, 1, 0)
 
-           
-            if event.type == pygame.MOUSEWHEEL:
-                if event.y > 0:
-                    zoom_dist += 5
-                    print("scrolled up")
-                elif event.y < 0:
-                    zoom_dist -= 5
-                    print("scrolled down")
-                    
             # keyboard event
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_0:
                     bResetModelMatrix = True
                 elif event.key == pygame.K_UP:
-                    offset_z += 5
+                    offset_z += 1
                 elif event.key == pygame.K_DOWN:
-                    offset_z -= 5
+                    offset_z -= 1
 
-        
+        draw_Scarecrow()                                                    # model creation and geom transforms
 
         # reset the current model-view back to the initial matrix
         if (bResetModelMatrix):
@@ -156,19 +140,10 @@ def main():
         
         glPushMatrix()
         glLoadMatrixf(initmodelMatrix)
-
-        gaze = lookat - eye
-        gaze_norm = gaze/np.linalg.norm(gaze)
-        eye_new = eye - gaze_norm * zoom_dist
-        look_at = lookat - gaze_norm * zoom_dist  # Corrected variable name from look_at to lookat
-        gluLookAt(eye_new[0], eye_new[1], eye_new[2], look_at[0], look_at[1], look_at[2], 0, 1, 0)                               # Static view: set camera's eye, look-at, and view-up in the world
-        draw_Scarecrow()                                                    # model creation and geom transforms should be below the camera (to be excuted before it)
         drawAxes()
-
-        
         glPopMatrix()
 
         pygame.display.flip()
-        pygame.time.wait(10) #allows me to change fps by doing 1000/fps 
+        pygame.time.wait(10)
 
 main()
